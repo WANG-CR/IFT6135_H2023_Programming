@@ -55,9 +55,9 @@ class GRU(nn.Module):
         # ==========================
         # TODO: Write your code here
         # ==========================
-        x_ir = inputs@self.w_ir.transpose()
-        x_iz = inputs@self.w_iz.transpose()
-        x_in = inputs@self.w_in.transpose()
+        x_ir = inputs@self.w_ir.transpose(0,1)
+        x_iz = inputs@self.w_iz.transpose(0,1)
+        x_in = inputs@self.w_in.transpose(0,1)
         # shape (batch_size, sequence_length, hidden_size)
         
         outputs = []
