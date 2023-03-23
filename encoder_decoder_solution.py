@@ -67,7 +67,7 @@ class GRU(nn.Module):
             z_t = F.sigmoid(x_iz[:, t, :] + self.b_iz + h_t@self.w_hz.transpose(0,1) + self.b_hz)
             n_t = F.tanh(x_in[:, t, :] + self.b_in + r_t * (h_t@self.w_hn.transpose(0,1) + self.b_hn))
             h_t = (1 - z_t) * n_t + z_t * h_t
-            outputs.append[h_t]
+            outputs.append(h_t)
     
         return torch.stack(outputs), h_t.unsqueeze(0) 
         
