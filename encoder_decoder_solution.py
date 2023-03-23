@@ -226,7 +226,7 @@ class DecoderAttn(nn.Module):
         inputs (`torch.LongTensor` of shape `(batch_size, sequence_length, hidden_size)`)
             The input tensor containing the encoded input sequence.
 
-        hidden_states(`torch.FloatTensor` of shape `(num_layers*2, batch_size, hidden_size)`)
+        hidden_states(`torch.FloatTensor` of shape `(num_layers, batch_size, hidden_size)`)
             The (initial) hidden state for the bidrectional GRU.
 
         mask ( optional `torch.LongTensor` of shape `(batch_size, sequence_length)`)
@@ -243,7 +243,13 @@ class DecoderAttn(nn.Module):
         # ==========================
         # TODO: Write your code here
         # ==========================
-        pass
+        # hidden_states = self.dropout(hidden_states)
+        inputs = self.dropout(inputs)
+        attended_inputs, alpha = self.mlp_attn(inputs, hidden_states)
+        outputs, hidden_states = self.rnn(attended_inputs, hidden_states)
+        print(f"outputs shape is {outputs.shape}")
+        print(f"hidden_states shape is {hidden_states.shape}")
+        return outputs, hidden_states
         
         
 class EncoderDecoder(nn.Module):
