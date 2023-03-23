@@ -69,7 +69,7 @@ class GRU(nn.Module):
             h_t = (1 - z_t) * n_t + z_t * h_t
             outputs.append(h_t)
     
-        return torch.stack(outputs), h_t.unsqueeze(0) 
+        return torch.stack(outputs).transpose(0,1), h_t.unsqueeze(0) 
         
 
 
