@@ -63,9 +63,9 @@ class GRU(nn.Module):
         outputs = []
         h_t = hidden_states[0]
         for t in range(inputs.shape[1]):
-            r_t = F.sigmoid(x_ir[:, t, :] + self.b_ir + h_t@self.w_hr.transpose() + self.b_hr)
-            z_t = F.sigmoid(x_iz[:, t, :] + self.b_iz + h_t@self.w_hz.transpose() + self.b_hz)
-            n_t = F.tanh(x_in[:, t, :] + self.b_in + r_t * (h_t@self.w_hn.transpose() + self.b_hn))
+            r_t = F.sigmoid(x_ir[:, t, :] + self.b_ir + h_t@self.w_hr.transpose(0,1) + self.b_hr)
+            z_t = F.sigmoid(x_iz[:, t, :] + self.b_iz + h_t@self.w_hz.transpose(0,1) + self.b_hz)
+            n_t = F.tanh(x_in[:, t, :] + self.b_in + r_t * (h_t@self.w_hn.transpose(0,1) + self.b_hn))
             h_t = (1 - z_t) * n_t + z_t * h_t
             outputs.append[h_t]
     
