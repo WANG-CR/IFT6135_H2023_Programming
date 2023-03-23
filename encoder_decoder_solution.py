@@ -118,9 +118,15 @@ class Attn(nn.Module):
         # TODO: Write your code here
         # ==========================
         # tanh(self.W (inputs),self.V (hidden_states))
-        score = self.tanh(self.W(inputs) + self.V(hidden_states.transpose(0,1))).sum(dim=-1, keepdim=True) # shape (batchsize, sequencelength, hiddensize) => shape (batchsize, hiddensize, 1)
-        alpha = self.softmax(score)
-        
+        # score = self.tanh(self.W(inputs) + self.V(hidden_states.transpose(0,1))).sum(dim=-1, keepdim=True) # shape (batchsize, sequencelength, hiddensize) => shape (batchsize, hiddensize, 1)
+        # alpha = self.softmax(score)
+
+        # query = torch.cat((hidden_states.sum(dim=0).unsqueeze(1).repeat(1, sequence_length, 1), inputs), dim=-1)
+        print(f"input shape is {inputs.shape}")
+        print(f"hidden states shape is {hidden_states.shape}")
+        score = torch.cat((inputs,hidden_states), dim=-1)
+
+        alpha = 1
         outputs = inputs * alpha
         return outputs, alpha
 
@@ -278,10 +284,10 @@ class EncoderDecoder(nn.Module):
             The final hidden state. 
         """
         hidden_states = self.encoder.initial_states(inputs.shape[0])
-        x, hidden_states = self.encoder(inputs, hidden_states)
+        x, hidden_states = self.encoder(inputs, hidden_states)  # hidden_size shape is [num_layers, batch_size, hidden_size]
         if self.encoder_only:
           x = x[:, 0]
           return x, hidden_states
-        x, hidden_states = self.decoder(x, hidden_states, mask)
+        x, hidden_states = self.decoder(x, hidden_states, mask) # input hidden_size shape should be [num_layers*2, batch_size, hidden_size]?
         x = x[:, 0]
         return x, hidden_states
