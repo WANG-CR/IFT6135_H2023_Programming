@@ -178,9 +178,8 @@ class Encoder(nn.Module):
         # sum the bidirectional hidden states
         output = output.reshape(output.shape[0], output.shape[1], -1, 2).sum(dim=-1)
         hidden = hidden.sum(dim=0, keepdim=True)
-        print(f"hidden states shape is {hidden_states.shape}")
-        print(f"hidden shape is {hidden.shape}")
-        return output, hidden
+        print(f"output shape is {output.shape}")
+        return (output, hidden)
 
     def initial_states(self, batch_size, device=None):
         if device is None:
