@@ -174,12 +174,11 @@ class Encoder(nn.Module):
         
         # bidirectional GRU
         output, hidden = self.rnn(embedding, hidden_states)
-        # forward GRU
-        # output_forward, hidden_forward = self.rnn(embedding, hidden_states)
-
-
-        # backward GRU
-
+        
+        # sum the bidirectional hidden states
+        output = output.reshape(output.shape[0], output.shape[1], -1, 2).sum(dim=-1)
+        print(f"hidden states shape is {hidden_states.shape}")
+        print(f"hidden shape is {hidden.shape}")
         return output, hidden
 
     def initial_states(self, batch_size, device=None):
