@@ -97,7 +97,7 @@ class Attn(nn.Module):
         This is a one layer MLP network that implements Soft (i.e. Bahdanau) Attention with masking
         Parameters
         ----------
-        inputs (`torch.FloatTensor` of shape `(batch_size, sequence_length, 2*hidden_size)`)
+        inputs (`torch.FloatTensor` of shape `(batch_size, sequence_length, hidden_size)`)
             The input tensor containing the embedded sequences.
 
         hidden_states (`torch.FloatTensor` of shape `(num_layers, batch_size, hidden_size)`)
@@ -124,9 +124,10 @@ class Attn(nn.Module):
         # query = torch.cat((hidden_states.sum(dim=0).unsqueeze(1).repeat(1, sequence_length, 1), inputs), dim=-1)
         print(f"input shape is {inputs.shape}")
         print(f"hidden states shape is {hidden_states.shape}")
-        score = torch.cat((inputs,hidden_states), dim=-1)
+        hidden_states = hidden_states.transpose(0,1).repeat(1, inputs.shape[1], 1)
+        score = self.V(self.tanh(self.W(torch.cat((inputs,hidden_states), dim=-1)))).sum(dim=-1, keepdim=True)
 
-        alpha = 1
+        alpha = self.softmax(score)
         outputs = inputs * alpha
         return outputs, alpha
 
