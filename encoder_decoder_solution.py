@@ -118,15 +118,17 @@ class Attn(nn.Module):
         # TODO: Write your code here
         # ==========================
         # tanh(self.W (inputs),self.V (hidden_states))
-        # score = self.tanh(self.W(inputs) + self.V(hidden_states.transpose(0,1))).sum(dim=-1, keepdim=True) # shape (batchsize, sequencelength, hiddensize) => shape (batchsize, hiddensize, 1)
+        # score = self.tanh(self.W(inputs) + self.V(hidden_states.transpose(0,1))).sum(dim=-1, keepdim=True) # shape (batchsize, sequencelength, hiddensize) => shape (batchsize, sequencelength, 1)
         # alpha = self.softmax(score)
 
         # query = torch.cat((hidden_states.sum(dim=0).unsqueeze(1).repeat(1, sequence_length, 1), inputs), dim=-1)
         print(f"input shape is {inputs.shape}")
         print(f"hidden states shape is {hidden_states.shape}")
         hidden_states = hidden_states.transpose(0,1).repeat(1, inputs.shape[1], 1)
-        score = self.V(self.tanh(self.W(torch.cat((inputs,hidden_states), dim=-1)))).sum(dim=-1, keepdim=True)
-
+        score = self.V(self.tanh(self.W(torch.cat((inputs,hidden_states), dim=-1)))).sum(dim=-1, keepdim=True) #(batchsize, sequencelength, 1)
+        # alpha = self.softmax(score)
+        if mask:
+            score = score.masked_fill(mask.unsqueeze(-1), -float('inf'))
         alpha = self.softmax(score)
         outputs = inputs * alpha
         return outputs, alpha
@@ -185,7 +187,8 @@ class Encoder(nn.Module):
         # sum the bidirectional hidden states
         output = output.reshape(output.shape[0], output.shape[1], -1, 2).sum(dim=-1)
         hidden = hidden.sum(dim=0, keepdim=True)
-        print(f"output shape is {output.shape}")
+        print(f"output shape is {output.shape}, line188")
+        print(f"hidden is {hidden.shape}, line189")
         return (output, hidden)
 
     def initial_states(self, batch_size, device=None):
@@ -245,7 +248,7 @@ class DecoderAttn(nn.Module):
         # ==========================
         # hidden_states = self.dropout(hidden_states)
         inputs = self.dropout(inputs)
-        attended_inputs, alpha = self.mlp_attn(inputs, hidden_states)
+        attended_inputs, alpha = self.mlp_attn(inputs, hidden_states, mask)
         outputs, hidden_states = self.rnn(attended_inputs, hidden_states)
         print(f"outputs shape is {outputs.shape}")
         print(f"hidden_states shape is {hidden_states.shape}")
@@ -267,7 +270,7 @@ class EncoderDecoder(nn.Module):
         self.encoder = Encoder(vocabulary_size, embedding_size, hidden_size,
                 num_layers, dropout=dropout)
         if not encoder_only:
-          self.decoder = DecoderAttn(vocabulary_size, embedding_size, hidden_size, num_layers, dropout=dropout)
+            self.decoder = DecoderAttn(vocabulary_size, embedding_size, hidden_size, num_layers, dropout=dropout)
         
     def forward(self, inputs, mask=None):
         """GRU Encoder-Decoder network with Soft attention.
