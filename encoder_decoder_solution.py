@@ -145,7 +145,7 @@ class Encoder(nn.Module):
         )
 
         self.dropout = nn.Dropout(p=dropout)
-        self.rnn = nn.GRU(hidden_size=embedding_size, hidden_size=hidden_size,batch_first=True, bidirectional=True)
+        self.rnn = nn.GRU(input_size=embedding_size, hidden_size=hidden_size,batch_first=True, bidirectional=True)
 
     def forward(self, inputs, hidden_states):
         """GRU Encoder.
