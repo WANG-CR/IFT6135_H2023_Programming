@@ -38,7 +38,12 @@ class LayerNorm(nn.Module):
         # ==========================
         # TODO: Write your code here
         # ==========================
-        pass
+        expectation_x = inputs.mean(dim=-1, keepdim=True)
+        variance_x = inputs.var(dim=-1, unbiased=False, keepdim=True)
+        # variance_x = (self.hidden_size - 1)/self.hidden_size * inputs.var(dim=-1, keepdim=True)
+
+        x = (inputs - expectation_x) * 1/torch.sqrt(variance_x + self.eps) * self.weight + self.bias
+        return x
 
     def reset_parameters(self):
         nn.init.ones_(self.weight)

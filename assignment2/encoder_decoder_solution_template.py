@@ -32,7 +32,7 @@ class GRU(nn.Module):
         for param in self.parameters():
             nn.init.uniform_(param, a=-(1/hidden_size)**0.5, b=(1/hidden_size)**0.5)
 
-  def forward(self, inputs, hidden_states):
+    def forward(self, inputs, hidden_states):
         """GRU.
         
         This is a Gated Recurrent Unit
@@ -55,7 +55,22 @@ class GRU(nn.Module):
         # ==========================
         # TODO: Write your code here
         # ==========================
-        pass
+        x_ir = inputs@self.w_ir.transpose()
+        x_iz = inputs@self.w_iz.transpose()
+        x_in = inputs@self.w_in.transpose()
+        # shape (batch_size, sequence_length, hidden_size)
+        
+        outputs = []
+        h_t = hidden_states[0]
+        for t in range(inputs.shape[1]):
+            r_t = F.sigmoid(x_ir[:, t, :] + self.b_ir + h_t@self.w_hr.transpose() + self.b_hr)
+            z_t = F.sigmoid(x_iz[:, t, :] + self.b_iz + h_t@self.w_hz.transpose() + self.b_hz)
+            n_t = F.tanh(x_in[:, t, :] + self.b_in + r_t * (h_t@self.w_hn.transpose() + self.b_hn))
+            h_t = (1 - z_t) * n_t + z_t * h_t
+            outputs.append[h_t]
+    
+        return torch.stack(outputs), h_t.unsqueeze(0) 
+        
 
 
 
@@ -82,7 +97,7 @@ class Attn(nn.Module):
         This is a one layer MLP network that implements Soft (i.e. Bahdanau) Attention with masking
         Parameters
         ----------
-        inputs (`torch.FloatTensor` of shape `(batch_size, sequence_length, hidden_size)`)
+        inputs (`torch.FloatTensor` of shape `(batch_size, sequence_length, 2*hidden_size)`)
             The input tensor containing the embedded sequences.
 
         hidden_states (`torch.FloatTensor` of shape `(num_layers, batch_size, hidden_size)`)
@@ -102,7 +117,12 @@ class Attn(nn.Module):
         # ==========================
         # TODO: Write your code here
         # ==========================
-        pass
+        # tanh(self.W (inputs),self.V (hidden_states))
+        score = self.tanh(self.W(inputs) + self.V(hidden_states.transpose(0,1))).sum(dim=-1, keepdim=True) # shape (batchsize, sequencelength, hiddensize) => shape (batchsize, hiddensize, 1)
+        alpha = self.softmax(score)
+        
+        outputs = inputs * alpha
+        return outputs, alpha
 
 
 class Encoder(nn.Module):
@@ -125,7 +145,7 @@ class Encoder(nn.Module):
         )
 
         self.dropout = nn.Dropout(p=dropout)
-        self.rnn = 
+        self.rnn = nn.GRU(hidden_size=embedding_size, hidden_size=hidden_size,batch_first=True, bidirectional=True)
 
     def forward(self, inputs, hidden_states):
         """GRU Encoder.
@@ -150,7 +170,17 @@ class Encoder(nn.Module):
         # ==========================
         # TODO: Write your code here
         # ==========================
-        pass
+        embedding = self.dropout(self.embedding(inputs))
+        
+        # bidirectional GRU
+        output, hidden = self.rnn(embedding, hidden_states)
+        # forward GRU
+        # output_forward, hidden_forward = self.rnn(embedding, hidden_states)
+
+
+        # backward GRU
+
+        return output, hidden
 
     def initial_states(self, batch_size, device=None):
         if device is None:
@@ -177,7 +207,7 @@ class DecoderAttn(nn.Module):
         self.num_layers = num_layers
         self.dropout = nn.Dropout(p=dropout)
 
-        self.rnn = 
+        self.rnn = nn.GRU(hidden_size=embedding_size, hidden_size=hidden_size,batch_first=True, bidirectional=False)
         
         self.mlp_attn = Attn(hidden_size, dropout)
 
