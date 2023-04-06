@@ -124,11 +124,14 @@ class Attn(nn.Module):
         # query = torch.cat((hidden_states.sum(dim=0).unsqueeze(1).repeat(1, sequence_length, 1), inputs), dim=-1)
         print(f"input shape is {inputs.shape}")
         print(f"hidden states shape is {hidden_states.shape}")
-        hidden_states = hidden_states.transpose(0,1).repeat(1, inputs.shape[1], 1)
-        score = self.V(self.tanh(self.W(torch.cat((inputs,hidden_states), dim=-1)))).sum(dim=-1, keepdim=True) #(batchsize, sequencelength, 1)
+
+        hidden_states = hidden_states.reshape(-1, 1, hidden_states.shape[-1]).repeat(1, inputs.shape[1], 1)
+        inputs = inputs.repeat(hidden_states.shape[0], 1, 1)
+        score = self.V(self.tanh(self.W(torch.cat([inputs,hidden_states], dim=-1)))).sum(dim=-1, keepdim=True) #(batchsize, sequencelength, 1)
         # alpha = self.softmax(score)
         if mask:
-            score = score.masked_fill(mask.unsqueeze(-1), -float('inf'))
+            # score = score.masked_fill(mask.unsqueeze(-1), -float('inf'))
+            score = score.masked_fill(mask.unsqueeze(-1)==0, -float('inf'))
         alpha = self.softmax(score)
         outputs = inputs * alpha
         return outputs, alpha
@@ -154,7 +157,7 @@ class Encoder(nn.Module):
         )
 
         self.dropout = nn.Dropout(p=dropout)
-        self.rnn = nn.GRU(input_size=embedding_size, hidden_size=hidden_size,batch_first=True, bidirectional=True)
+        self.rnn = nn.GRU(input_size=embedding_size, hidden_size=hidden_size,batch_first=True, bidirectional=True, dropout=dropout)
 
     def forward(self, inputs, hidden_states):
         """GRU Encoder.
@@ -193,7 +196,7 @@ class Encoder(nn.Module):
         hidden = hidden.reshape(-1, 2, B, self.hidden_size).sum(dim=1)
         print(f"output shape is {output.shape}, line188")
         print(f"hidden is {hidden.shape}, line189")
-        return (output, hidden)
+        return output, hidden
 
     def initial_states(self, batch_size, device=None):
         if device is None:
@@ -220,7 +223,7 @@ class DecoderAttn(nn.Module):
         self.num_layers = num_layers
         self.dropout = nn.Dropout(p=dropout)
 
-        self.rnn = nn.GRU(input_size=embedding_size, hidden_size=hidden_size,batch_first=True, bidirectional=False)
+        self.rnn = nn.GRU(input_size=embedding_size, hidden_size=hidden_size,batch_first=True, bidirectional=False, dropout=dropout)
         
         self.mlp_attn = Attn(hidden_size, dropout)
 
