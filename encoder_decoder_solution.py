@@ -133,7 +133,7 @@ class Attn(nn.Module):
             # score = score.masked_fill(mask.unsqueeze(-1), -float('inf'))
             # score = score.masked_fill(mask.unsqueeze(-1)==0, -float('inf'))
             mask = mask.unsqueeze(-1).repeat(N, 1, 1)
-            score = score.masked_fill(mask==0, -1000)
+            score = score.masked_fill(mask==0, -float('inf'))
         alpha = self.softmax(score)
         outputs = inputs * alpha
         return outputs, alpha
