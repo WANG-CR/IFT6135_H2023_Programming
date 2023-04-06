@@ -183,10 +183,14 @@ class Encoder(nn.Module):
         
         # bidirectional GRU
         output, hidden = self.rnn(embedding, hidden_states)
-        
+        # output shape is [B, L, 2*H]
+        # hidden shape is [2*1, B, H]
+
+        B = output.shape[0]
+        L = output.shape[1]
         # sum the bidirectional hidden states
-        output = output.reshape(output.shape[0], output.shape[1], -1, 2).sum(dim=-1)
-        hidden = hidden.sum(dim=0, keepdim=True)
+        output = output.reshape(B, L, -1, 2).sum(dim=-1)
+        hidden = hidden.reshape(-1, 2, B, self.hidden_size).sum(dim=1)
         print(f"output shape is {output.shape}, line188")
         print(f"hidden is {hidden.shape}, line189")
         return (output, hidden)
@@ -223,14 +227,14 @@ class DecoderAttn(nn.Module):
     def forward(self, inputs, hidden_states, mask=None):
         """GRU Decoder network with Soft attention
 
-        This is a Unidirectional Gated Recurrent Unit Encoder network
+        This is a Unidirectional Gated Recurrent Unit Decoder network
         Parameters
         ----------
         inputs (`torch.LongTensor` of shape `(batch_size, sequence_length, hidden_size)`)
             The input tensor containing the encoded input sequence.
 
         hidden_states(`torch.FloatTensor` of shape `(num_layers, batch_size, hidden_size)`)
-            The (initial) hidden state for the bidrectional GRU.
+            The (initial) hidden state for the unidirectional GRU.
 
         mask ( optional `torch.LongTensor` of shape `(batch_size, sequence_length)`)
             The masked tensor containing the location of padding in the sequences.
