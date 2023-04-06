@@ -60,6 +60,10 @@ class MultiHeadedAttention(nn.Module):
         # ==========================
         # TODO: Write your code here
         # ==========================
+        self.WQ = nn.Linear(num_heads * head_size, num_heads * head_size) 
+        self.WK = nn.Linear(num_heads * head_size, num_heads * head_size) 
+        self.WV = nn.Linear(num_heads * head_size, num_heads * head_size) 
+        self.WH = nn.Linear(num_heads * head_size, num_heads * head_size) 
 
     def get_attention_weights(self, queries, keys, mask=None):
         """Compute the attention weights.
@@ -253,6 +257,12 @@ class MultiHeadedAttention(nn.Module):
         # ==========================
         # TODO: Write your code here
         # ==========================
+        queries = self.split_heads(self.WQ(hidden_states))
+        keys = self.split_heads(self.WK(hidden_states))
+        values = self.split_heads(self.WV(hidden_states))
+        hiddens = self.apply_attention(queries, keys, values, mask)
+        hiddens = self.WH(self.merge_heads(hiddens))
+        return hiddens
         pass
 
 class PostNormAttentionBlock(nn.Module):
