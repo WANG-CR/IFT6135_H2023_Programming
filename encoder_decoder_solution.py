@@ -125,8 +125,8 @@ class Attn(nn.Module):
         print(f"input shape is {inputs.shape}")
         print(f"hidden states shape is {hidden_states.shape}")
 
-        hidden_states = hidden_states.reshape(-1, 1, hidden_states.shape[-1]).repeat(1, inputs.shape[1], 1)
         inputs_repeat = inputs.repeat(hidden_states.shape[0], 1, 1)
+        hidden_states = hidden_states.reshape(-1, 1, hidden_states.shape[-1]).repeat(1, inputs.shape[1], 1)
         score = self.V(self.tanh(self.W(torch.cat([inputs_repeat,hidden_states], dim=-1)))).sum(dim=-1, keepdim=True) #(batchsize, sequencelength, 1)
         # alpha = self.softmax(score)
         if mask:
