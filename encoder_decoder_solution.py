@@ -117,38 +117,27 @@ class Attn(nn.Module):
         # # ==========================
         # # TODO: Write your code here
         # # ==========================
-        # # tanh(self.W (inputs),self.V (hidden_states))
-        # # score = self.tanh(self.W(inputs) + self.V(hidden_states.transpose(0,1))).sum(dim=-1, keepdim=True) # shape (batchsize, sequencelength, hiddensize) => shape (batchsize, sequencelength, 1)
-        # # alpha = self.softmax(score)
-
-        # # query = torch.cat((hidden_states.sum(dim=0).unsqueeze(1).repeat(1, sequence_length, 1), inputs), dim=-1)
-        # print(f"input shape is {inputs.shape}")
-        # print(f"hidden states shape is {hidden_states.shape}")
-
-        # hidden_states = hidden_states.reshape(-1, 1, hidden_states.shape[-1]).repeat(1, inputs.shape[1], 1)
-        # inputs = inputs.repeat(hidden_states.shape[0], 1, 1)
-        # score = self.V(self.tanh(self.W(torch.cat([inputs,hidden_states], dim=-1)))).sum(dim=-1, keepdim=True) #(batchsize, sequencelength, 1)
-        # # alpha = self.softmax(score)
-        # if mask:
-        #     # score = score.masked_fill(mask.unsqueeze(-1), -float('inf'))
-        #     score = score.masked_fill(mask.unsqueeze(-1)==0, -float('inf'))
+        # tanh(self.W (inputs),self.V (hidden_states))
+        # score = self.tanh(self.W(inputs) + self.V(hidden_states.transpose(0,1))).sum(dim=-1, keepdim=True) # shape (batchsize, sequencelength, hiddensize) => shape (batchsize, sequencelength, 1)
         # alpha = self.softmax(score)
-        # outputs = inputs * alpha
-        # return outputs, alpha
 
-        num_layers = hidden_states.shape[0]
-        hidden_states_repeat = hidden_states.reshape(
-            -1, 1, hidden_states.shape[-1]).repeat(1, inputs.shape[1], 1)  # [b*n_l, T, h]
-        inputs_repeat = inputs.repeat(num_layers, 1, 1)  # [b*n_l, T, h]
-        attn_input = torch.cat([inputs_repeat, hidden_states_repeat], -1)  # [b, T, h*2]
-        outputs = self.V(self.tanh(self.W(attn_input)))  # [b*n_l, T, h]
-        logits = torch.sum(outputs, dim=-1, keepdim=True)  # [b*n_l, T, 1]
-        if mask is not None:
-            mask = mask[:, :, None].repeat(num_layers, 1, 1)
-            logits = logits.masked_fill(mask == 0, -1000)  # [b*n_l, T, 1]
-        x_attn = self.softmax(logits)  # [b*n_l, T, 1]
-        return x_attn * inputs, x_attn
-        
+        # query = torch.cat((hidden_states.sum(dim=0).unsqueeze(1).repeat(1, sequence_length, 1), inputs), dim=-1)
+        print(f"input shape is {inputs.shape}")
+        print(f"hidden states shape is {hidden_states.shape}")
+
+        hidden_states = hidden_states.reshape(-1, 1, hidden_states.shape[-1]).repeat(1, inputs.shape[1], 1)
+        inputs = inputs.repeat(hidden_states.shape[0], 1, 1)
+        score = self.V(self.tanh(self.W(torch.cat([inputs,hidden_states], dim=-1)))).sum(dim=-1, keepdim=True) #(batchsize, sequencelength, 1)
+        # alpha = self.softmax(score)
+        if mask:
+            # score = score.masked_fill(mask.unsqueeze(-1), -float('inf'))
+            # score = score.masked_fill(mask.unsqueeze(-1)==0, -float('inf'))
+            score = score.masked_fill(mask.unsqueeze(-1)==0, -1000)
+        alpha = self.softmax(score)
+        outputs = inputs * alpha
+        return outputs, alpha
+
+
 class Encoder(nn.Module):
     def __init__(
         self,
