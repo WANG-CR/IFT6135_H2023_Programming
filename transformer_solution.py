@@ -413,7 +413,8 @@ class Transformer(nn.Module):
         # TODO: Write your code here
         # ==========================
         x = self.dropout(x)
-        x = self.transformer(x)
+        for layer in self.transformer:
+            x = layer(x)
         #Take the cls token representation and send it to mlp_head
         cls = x[1]
         output = self.mlp_head(cls)
