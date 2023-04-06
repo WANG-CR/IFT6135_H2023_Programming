@@ -417,7 +417,7 @@ class Transformer(nn.Module):
             x = layer(x)
         #Take the cls token representation and send it to mlp_head
         print(f"output shape is {x.shape}")
-        cls = x[1]
+        cls = x[:, 0, ...]
         print(f"cls shape is {cls.shape}")
         output = self.mlp_head(cls)
         return output
