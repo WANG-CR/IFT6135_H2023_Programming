@@ -265,7 +265,7 @@ class MultiHeadedAttention(nn.Module):
         print(f"values shape is {values.shape}")
         hiddens = self.apply_attention(queries, keys, values, mask)
         print(f"hiddens shape is {hiddens.shape}")
-        hiddens = self.WH(self.merge_heads(hiddens))
+        hiddens = self.WH(hiddens)
         return hiddens
         pass
 
