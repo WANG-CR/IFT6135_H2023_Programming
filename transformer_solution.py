@@ -339,6 +339,11 @@ class PreNormAttentionBlock(nn.Module):
         # ==========================
         # TODO: Write your code here
         # ==========================
+        res = x
+        x = self.attn(self.layer_norm_1(x), mask) + res
+        res = x
+        x = self.linear(self.layer_norm_2(x)) + res
+        return x
         pass
 
 
@@ -407,10 +412,10 @@ class Transformer(nn.Module):
         # ==========================
         # TODO: Write your code here
         # ==========================
-        
+        x = self.dropout(x)
+        x = self.transformer(x)
         #Take the cls token representation and send it to mlp_head
- 
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        cls = x[1]
+        output = self.mlp_head(cls)
+        return output
+
