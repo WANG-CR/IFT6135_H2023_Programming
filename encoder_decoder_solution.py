@@ -129,7 +129,7 @@ class Attn(nn.Module):
         inputs_repeat = inputs.repeat(N, 1, 1)
         hidden_states = hidden_states.reshape(-1, 1, hidden_states.shape[-1]).repeat(1, inputs.shape[1], 1)
         score = self.V(self.tanh(self.W(torch.cat([inputs_repeat,hidden_states], dim=-1)))).sum(dim=-1, keepdim=True) #(batchsize, sequencelength, 1)
-        if mask:
+        if mask is not None:
             # score = score.masked_fill(mask.unsqueeze(-1), -float('inf'))
             # score = score.masked_fill(mask.unsqueeze(-1)==0, -float('inf'))
             mask = mask.unsqueeze(-1).repeat(N, 1, 1)
