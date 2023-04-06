@@ -96,9 +96,10 @@ class MultiHeadedAttention(nn.Module):
         # ==========================
         # TODO: Write your code here
         # ==========================
-        score = 1/torch.sqrt(self.head_size)*(queries@keys.transpose(-2,-1)) #shape [B, Nhead, L, L]
+        score = 1/math.sqrt(self.head_size)*(queries@keys.transpose(-2,-1)) #shape [B, Nhead, L, L]
         if mask is not None:
-            mask = mask[:, None, :, None]
+            mask = mask[:, None, None, :]
+            mask = mask.repeat(1, self.num_heads, mask.shape[-1], 1)
             score = score.masked_fill(mask==0, -float('inf'))
         score = torch.nn.functional.softmax(score, dim=-1)
         return score
