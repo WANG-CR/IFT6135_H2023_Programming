@@ -258,13 +258,9 @@ class MultiHeadedAttention(nn.Module):
         # TODO: Write your code here
         # ==========================
         queries = self.split_heads(self.WQ(hidden_states))
-        print(f"query shape is {queries.shape}")
         keys = self.split_heads(self.WK(hidden_states))
-        print(f"keys shape is {keys.shape}")
         values = self.split_heads(self.WV(hidden_states))
-        print(f"values shape is {values.shape}")
         hiddens = self.apply_attention(queries, keys, values, mask)
-        print(f"hiddens shape is {hiddens.shape}")
         hiddens = self.WH(hiddens)
         return hiddens
         pass
@@ -416,9 +412,7 @@ class Transformer(nn.Module):
         for layer in self.transformer:
             x = layer(x)
         #Take the cls token representation and send it to mlp_head
-        print(f"output shape is {x.shape}")
         cls = x[:, 0, ...]
-        print(f"cls shape is {cls.shape}")
         output = self.mlp_head(cls)
         return output
 
