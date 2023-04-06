@@ -103,7 +103,6 @@ class MultiHeadedAttention(nn.Module):
             score = score.masked_fill(mask==0, -float('inf'))
         score = torch.nn.functional.softmax(score, dim=-1)
         return score
-        pass
         
     def apply_attention(self, queries, keys, values, mask=None):
         """Apply the attention.
@@ -146,11 +145,12 @@ class MultiHeadedAttention(nn.Module):
             Tensor containing the concatenated outputs of the attention for all
             the sequences in the batch, and all positions in each sequence. 
         """
-
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        score = self.get_attention_weights(queries, keys, mask) #(batch_size, num_heads, sequence_length, sequence_length)
+        hiddens = score@values #[B, N_head, L, head_size]
+        B = hiddens.shape[0]
+        L = hiddens.shape[2]
+        hiddens = hiddens.transpose(1,2).reshape(B, L, -1)
+        return hiddens
 
     def split_heads(self, tensor):
         """Split the head vectors.
