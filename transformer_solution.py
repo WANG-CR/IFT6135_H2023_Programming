@@ -172,7 +172,11 @@ class MultiHeadedAttention(nn.Module):
         # ==========================
         # TODO: Write your code here
         # ==========================
-        pass
+        batch_size = tensor.shape[0]
+        sequence_length = tensor.shape[1]
+        output = tensor.reshape(batch_size, sequence_length, self.num_heads, -1)
+        output = output.transpose(1, 2)
+        return output
         
     def merge_heads(self, tensor):
         """Merge the head vectors.
@@ -200,7 +204,9 @@ class MultiHeadedAttention(nn.Module):
         # ==========================
         # TODO: Write your code here
         # ==========================
-        pass
+        output = tensor.transpose(1,2)
+        output = output.reshape(output.shape[0], output.shape[1], self.num_heads, -1)
+        return output
 
     def forward(self, hidden_states, mask=None):
         """Multi-headed attention.
