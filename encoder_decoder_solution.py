@@ -114,29 +114,41 @@ class Attn(nn.Module):
         x_attn (`torch.FloatTensor` of shape `(batch_size, sequence_length, 1)`)
             The attention vector.
         """
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        # tanh(self.W (inputs),self.V (hidden_states))
-        # score = self.tanh(self.W(inputs) + self.V(hidden_states.transpose(0,1))).sum(dim=-1, keepdim=True) # shape (batchsize, sequencelength, hiddensize) => shape (batchsize, sequencelength, 1)
+        # # ==========================
+        # # TODO: Write your code here
+        # # ==========================
+        # # tanh(self.W (inputs),self.V (hidden_states))
+        # # score = self.tanh(self.W(inputs) + self.V(hidden_states.transpose(0,1))).sum(dim=-1, keepdim=True) # shape (batchsize, sequencelength, hiddensize) => shape (batchsize, sequencelength, 1)
+        # # alpha = self.softmax(score)
+
+        # # query = torch.cat((hidden_states.sum(dim=0).unsqueeze(1).repeat(1, sequence_length, 1), inputs), dim=-1)
+        # print(f"input shape is {inputs.shape}")
+        # print(f"hidden states shape is {hidden_states.shape}")
+
+        # hidden_states = hidden_states.reshape(-1, 1, hidden_states.shape[-1]).repeat(1, inputs.shape[1], 1)
+        # inputs = inputs.repeat(hidden_states.shape[0], 1, 1)
+        # score = self.V(self.tanh(self.W(torch.cat([inputs,hidden_states], dim=-1)))).sum(dim=-1, keepdim=True) #(batchsize, sequencelength, 1)
+        # # alpha = self.softmax(score)
+        # if mask:
+        #     # score = score.masked_fill(mask.unsqueeze(-1), -float('inf'))
+        #     score = score.masked_fill(mask.unsqueeze(-1)==0, -float('inf'))
         # alpha = self.softmax(score)
+        # outputs = inputs * alpha
+        # return outputs, alpha
 
-        # query = torch.cat((hidden_states.sum(dim=0).unsqueeze(1).repeat(1, sequence_length, 1), inputs), dim=-1)
-        print(f"input shape is {inputs.shape}")
-        print(f"hidden states shape is {hidden_states.shape}")
-
-        hidden_states = hidden_states.reshape(-1, 1, hidden_states.shape[-1]).repeat(1, inputs.shape[1], 1)
-        inputs = inputs.repeat(hidden_states.shape[0], 1, 1)
-        score = self.V(self.tanh(self.W(torch.cat([inputs,hidden_states], dim=-1)))).sum(dim=-1, keepdim=True) #(batchsize, sequencelength, 1)
-        # alpha = self.softmax(score)
-        if mask:
-            # score = score.masked_fill(mask.unsqueeze(-1), -float('inf'))
-            score = score.masked_fill(mask.unsqueeze(-1)==0, -float('inf'))
-        alpha = self.softmax(score)
-        outputs = inputs * alpha
-        return outputs, alpha
-
-
+        num_layers = hidden_states.shape[0]
+        hidden_states_repeat = hidden_states.reshape(
+            -1, 1, hidden_states.shape[-1]).repeat(1, inputs.shape[1], 1)  # [b*n_l, T, h]
+        inputs_repeat = inputs.repeat(num_layers, 1, 1)  # [b*n_l, T, h]
+        attn_input = torch.cat([inputs_repeat, hidden_states_repeat], -1)  # [b, T, h*2]
+        outputs = self.V(self.tanh(self.W(attn_input)))  # [b*n_l, T, h]
+        logits = torch.sum(outputs, dim=-1, keepdim=True)  # [b*n_l, T, 1]
+        if mask is not None:
+            mask = mask[:, :, None].repeat(num_layers, 1, 1)
+            logits = logits.masked_fill(mask == 0, -1000)  # [b*n_l, T, 1]
+        x_attn = self.softmax(logits)  # [b*n_l, T, 1]
+        return x_attn * inputs, x_attn
+        
 class Encoder(nn.Module):
     def __init__(
         self,
@@ -205,70 +217,6 @@ class Encoder(nn.Module):
         # The initial state is a constant here, and is not a learnable parameter
         h_0 = torch.zeros(shape, dtype=torch.float, device=device)
         return h_0
-
-# class Encoder(nn.Module):
-#     def __init__(
-#             self,
-#             vocabulary_size=30522,
-#             embedding_size=256,
-#             hidden_size=256,
-#             num_layers=1,
-#             dropout=0.0
-#     ):
-#         super(Encoder, self).__init__()
-#         self.vocabulary_size = vocabulary_size
-#         self.embedding_size = embedding_size
-#         self.hidden_size = hidden_size
-#         self.num_layers = num_layers
-
-#         self.embedding = nn.Embedding(
-#             vocabulary_size, embedding_size, padding_idx=0,
-#         )
-
-#         self.dropout = nn.Dropout(p=dropout)
-#         self.rnn = nn.GRU(
-#             input_size=embedding_size,
-#             hidden_size=hidden_size,
-#             num_layers=num_layers,
-#             batch_first=True,
-#             bidirectional=True,
-#             dropout=dropout
-#         )
-
-#     def forward(self, inputs, hidden_states):
-#         """GRU Encoder.
-
-#         This is a Bidirectional Gated Recurrent Unit Encoder network
-#         Parameters
-#         ----------
-#         inputs (`torch.FloatTensor` of shape `(batch_size, sequence_length)`)
-#             The input tensor containing the token sequences.
-
-#         hidden_states(`torch.FloatTensor` of shape `(num_layers*2, batch_size, hidden_size)`)
-#             The (initial) hidden state for the bidrectional GRU.
-
-#         Returns
-#         -------
-#         outputs (`torch.FloatTensor` of shape `(batch_size, sequence_length, hidden_size)`)
-#             A feature tensor encoding the input sentence.
-
-#         hidden_states (`torch.FloatTensor` of shape `(num_layers, batch_size, hidden_size)`)
-#             The final hidden state.
-#         """
-#         inputs = self.embedding(inputs)
-#         inputs = self.dropout(inputs)
-#         outputs, hidden_states = self.rnn(inputs, hidden_states)
-#         outputs = outputs.reshape(outputs.shape[0], outputs.shape[1], 2, -1).sum(2)
-#         hidden_states = hidden_states.reshape(-1, 2, hidden_states.shape[1], hidden_states.shape[2]).sum(1)
-#         return outputs, hidden_states
-
-#     def initial_states(self, batch_size, device=None):
-#         if device is None:
-#             device = next(self.parameters()).device
-#         shape = (self.num_layers * 2, batch_size, self.hidden_size)
-#         # The initial state is a constant here, and is not a learnable parameter
-#         h_0 = torch.zeros(shape, dtype=torch.float, device=device)
-#         return h_0
 
 class DecoderAttn(nn.Module):
     def __init__(
