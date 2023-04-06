@@ -258,9 +258,13 @@ class MultiHeadedAttention(nn.Module):
         # TODO: Write your code here
         # ==========================
         queries = self.split_heads(self.WQ(hidden_states))
+        print(f"query shape is {queries.shape()}")
         keys = self.split_heads(self.WK(hidden_states))
+        print(f"keys shape is {keys.shape()}")
         values = self.split_heads(self.WV(hidden_states))
+        print(f"values shape is {values.shape()}")
         hiddens = self.apply_attention(queries, keys, values, mask)
+        print(f"hiddens shape is {hiddens.shape()}")
         hiddens = self.WH(self.merge_heads(hiddens))
         return hiddens
         pass
