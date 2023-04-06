@@ -205,7 +205,7 @@ class MultiHeadedAttention(nn.Module):
         # TODO: Write your code here
         # ==========================
         output = tensor.transpose(1,2)
-        output = output.reshape(output.shape[0], output.shape[1], self.num_heads, -1)
+        output = output.reshape(output.shape[0], output.shape[1], -1)
         return output
 
     def forward(self, hidden_states, mask=None):
