@@ -122,8 +122,8 @@ class Attn(nn.Module):
         # alpha = self.softmax(score)
 
         # query = torch.cat((hidden_states.sum(dim=0).unsqueeze(1).repeat(1, sequence_length, 1), inputs), dim=-1)
-        print(f"input shape is {inputs.shape}")
-        print(f"hidden states shape is {hidden_states.shape}")
+        # print(f"input shape is {inputs.shape}")
+        # print(f"hidden states shape is {hidden_states.shape}")
 
         N = hidden_states.shape[0]
         inputs_repeat = inputs.repeat(N, 1, 1)
@@ -159,7 +159,7 @@ class Encoder(nn.Module):
         )
 
         self.dropout = nn.Dropout(p=dropout)
-        self.rnn = nn.GRU(input_size=embedding_size, hidden_size=hidden_size,batch_first=True, bidirectional=True, dropout=dropout)
+        self.rnn = nn.GRU(input_size=embedding_size, hidden_size=hidden_size,batch_first=True, bidirectional=True)
 
     def forward(self, inputs, hidden_states):
         """GRU Encoder.
@@ -196,8 +196,8 @@ class Encoder(nn.Module):
         # sum the bidirectional hidden states
         output = output.reshape(B, L, 2, -1).sum(dim=-2)
         hidden = hidden.reshape(-1, 2, B, self.hidden_size).sum(dim=1)
-        print(f"output shape is {output.shape}, line188")
-        print(f"hidden is {hidden.shape}, line189")
+        # print(f"output shape is {output.shape}, line188")
+        # print(f"hidden is {hidden.shape}, line189")
         return output, hidden
 
     def initial_states(self, batch_size, device=None):
@@ -225,7 +225,7 @@ class DecoderAttn(nn.Module):
         self.num_layers = num_layers
         self.dropout = nn.Dropout(p=dropout)
 
-        self.rnn = nn.GRU(input_size=embedding_size, hidden_size=hidden_size,batch_first=True, bidirectional=False, dropout=dropout)
+        self.rnn = nn.GRU(input_size=embedding_size, hidden_size=hidden_size,batch_first=True, bidirectional=False)
         
         self.mlp_attn = Attn(hidden_size, dropout)
 
@@ -259,8 +259,8 @@ class DecoderAttn(nn.Module):
         inputs = self.dropout(inputs)
         attended_inputs, alpha = self.mlp_attn(inputs, hidden_states, mask)
         outputs, hidden_states = self.rnn(attended_inputs, hidden_states)
-        print(f"outputs shape is {outputs.shape}")
-        print(f"hidden_states shape is {hidden_states.shape}")
+        # print(f"outputs shape is {outputs.shape}")
+        # print(f"hidden_states shape is {hidden_states.shape}")
         return outputs, hidden_states
         
         
